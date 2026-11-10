@@ -1,0 +1,70 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  secretos:
+    name: Escaneo de secretos
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - run: node scripts/escanear-secretos.mjs
+
+  api:
+    name: API (typecheck y tests)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: services/api
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: services/api/package-lock.json
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+
+  movil:
+    name: Flutter (analyze y tests)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/mobile
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: "3.47.0"
+          cache: true
+      - run: flutter pub get
+      - run: flutter analyze
+      - run: flutter test
+
+  gateway:
+    name: Gateway (PHP lint)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.3"
+          coverage: none
+          tools: none
+      - name: Lint de PHP
+        run: |
+          set -euo pipefail
+          find services/sunat-gateway -type f -name '*.php' -not -path '*/vendor/*' -print0 \
+            | xargs -0 -r -n1 -P4 php -l

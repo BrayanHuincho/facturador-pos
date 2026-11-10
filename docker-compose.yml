@@ -1,0 +1,62 @@
+name: facturador
+
+x-servicio-node: &servicio-node
+  build:
+    context: ./services/api
+  image: facturador-api:local
+  env_file:
+    - .env
+  restart: unless-stopped
+  security_opt:
+    - no-new-privileges:true
+  depends_on:
+    gateway:
+      condition: service_healthy
+
+services:
+  api:
+    <<: *servicio-node
+    environment:
+      PORT: "4200"
+      SUNAT_GATEWAY_URL: http://gateway:4210
+    ports:
+      - "4200:4200"
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "fetch('http://127.0.0.1:4200/api/v1/salud').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
+      interval: 30s
+      timeout: 5s
+      start_period: 15s
+      retries: 3
+
+  worker:
+    <<: *servicio-node
+    command: ["node", "dist/worker.js"]
+    environment:
+      SUNAT_GATEWAY_URL: http://gateway:4210
+
+  gateway:
+    build:
+      context: ./services/sunat-gateway
+    image: facturador-sunat-gateway:local
+    environment:
+      SERVICIO_SUNAT_TOKEN: ${SUNAT_GATEWAY_TOKEN:?Define SUNAT_GATEWAY_TOKEN en .env}
+      SUNAT_GATEWAY_TOKEN: ${SUNAT_GATEWAY_TOKEN:?Define SUNAT_GATEWAY_TOKEN en .env}
+    ports:
+      - "127.0.0.1:4211:4210"
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test:
+        - CMD
+        - php
+        - -r
+        - "exit(@file_get_contents('http://127.0.0.1:4210/salud') === false ? 1 : 0);"
+      interval: 30s
+      timeout: 5s
+      start_period: 10s
+      retries: 3

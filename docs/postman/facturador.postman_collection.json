@@ -1,0 +1,142 @@
+{
+  "info": {
+    "name": "Facturador POS",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "supabase_url", "value": "http://127.0.0.1:54321" },
+    { "key": "anon_key", "value": "" },
+    { "key": "api_url", "value": "http://127.0.0.1:14200/api/v1" },
+    { "key": "correo", "value": "demo@gmail.com" },
+    { "key": "clave", "value": "demo12345" },
+    { "key": "token", "value": "" },
+    { "key": "comprobante_id", "value": "" }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }]
+  },
+  "item": [
+    {
+      "name": "1. Iniciar sesión",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('sesión iniciada', () => pm.response.to.have.status(200));",
+              "pm.collectionVariables.set('token', pm.response.json().access_token);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "auth": { "type": "noauth" },
+        "method": "POST",
+        "header": [
+          { "key": "apikey", "value": "{{anon_key}}" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": "{{supabase_url}}/auth/v1/token?grant_type=password",
+        "body": { "mode": "raw", "raw": "{\n  \"email\": \"{{correo}}\",\n  \"password\": \"{{clave}}\"\n}" }
+      }
+    },
+    {
+      "name": "2. Salud",
+      "event": [
+        {
+          "listen": "test",
+          "script": { "type": "text/javascript", "exec": ["pm.test('responde', () => pm.response.to.have.status(200));"] }
+        }
+      ],
+      "request": { "auth": { "type": "noauth" }, "method": "GET", "url": "{{api_url}}/salud" }
+    },
+    {
+      "name": "3. Configuración inicial (solo la primera vez)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": ["pm.test('creada o ya existente', () => pm.expect(pm.response.code).to.be.oneOf([201, 409]));"]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": "{{api_url}}/configuracion/inicial",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"empresa\": {\n    \"ruc\": \"20000000001\",\n    \"razon_social\": \"EMPRESA DE PRUEBA\",\n    \"nombre_comercial\": \"Mi negocio de prueba\",\n    \"ubigeo\": \"150101\",\n    \"departamento\": \"LIMA\",\n    \"provincia\": \"LIMA\",\n    \"distrito\": \"LIMA\",\n    \"direccion\": \"AV PRUEBA 123\"\n  },\n  \"establecimiento\": {\n    \"codigo\": \"0000\",\n    \"nombre\": \"Principal\",\n    \"direccion\": \"AV PRUEBA 123\",\n    \"ubigeo\": \"150101\"\n  }\n}"
+        }
+      }
+    },
+    {
+      "name": "4. Calcular totales sin guardar",
+      "event": [
+        {
+          "listen": "test",
+          "script": { "type": "text/javascript", "exec": ["pm.test('calculado', () => pm.response.to.have.status(200));"] }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": "{{api_url}}/comprobantes/previsualizar",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"tipo\": \"03\",\n  \"cliente\": { \"tipo_documento\": \"1\", \"numero_documento\": \"12345678\", \"nombre\": \"CLIENTE DE PRUEBA\" },\n  \"items\": [{ \"descripcion\": \"Producto de prueba\", \"cantidad\": 2, \"precio_unitario\": \"11.80\", \"afectacion\": \"10\" }],\n  \"pagos\": [{ \"medio\": \"efectivo\", \"monto\": \"30.00\" }]\n}"
+        }
+      }
+    },
+    {
+      "name": "5. Emitir boleta",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('emitida', () => pm.expect(pm.response.code).to.be.oneOf([200, 201]));",
+              "pm.collectionVariables.set('comprobante_id', pm.response.json().id);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Idempotency-Key", "value": "{{$guid}}" }
+        ],
+        "url": "{{api_url}}/comprobantes",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"tipo\": \"03\",\n  \"cliente\": { \"tipo_documento\": \"1\", \"numero_documento\": \"12345678\", \"nombre\": \"CLIENTE DE PRUEBA\" },\n  \"items\": [{ \"descripcion\": \"Producto de prueba\", \"cantidad\": 2, \"precio_unitario\": \"11.80\", \"afectacion\": \"10\" }],\n  \"pagos\": [{ \"medio\": \"efectivo\", \"monto\": \"30.00\" }]\n}"
+        }
+      }
+    },
+    {
+      "name": "6. Ver comprobante y estado SUNAT",
+      "event": [
+        {
+          "listen": "test",
+          "script": { "type": "text/javascript", "exec": ["pm.test('encontrado', () => pm.response.to.have.status(200));"] }
+        }
+      ],
+      "request": { "method": "GET", "url": "{{api_url}}/comprobantes/{{comprobante_id}}" }
+    },
+    {
+      "name": "7. Enlace del PDF",
+      "event": [
+        {
+          "listen": "test",
+          "script": { "type": "text/javascript", "exec": ["pm.test('enlace generado', () => pm.response.to.have.status(200));"] }
+        }
+      ],
+      "request": { "method": "GET", "url": "{{api_url}}/comprobantes/{{comprobante_id}}/archivo/pdf-a4" }
+    }
+  ]
+}
