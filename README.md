@@ -6,9 +6,9 @@ El proyecto se ha probado en el modo beta de SUNAT; todavía no ha emitido en pr
 
 ## Capturas
 
-| Productos | Vista previa | Reportes |
+| Productos | Cobrar | Vista previa |
 |:---:|:---:|:---:|
-| <img src="assets/capturas/productos.png" width="240" alt="Lista de productos"> | <img src="assets/capturas/vista-previa.png" width="240" alt="Vista previa del comprobante"> | <img src="assets/capturas/reportes.png" width="240" alt="Reportes de ventas"> |
+| <img src="assets/capturas/productos.png" width="240" alt="Lista de productos"> | <img src="assets/capturas/cobrar.png" width="240" alt="Cobro con boleta, factura y medios de pago"> | <img src="assets/capturas/vista-previa.png" width="240" alt="Vista previa del comprobante"> |
 
 Son datos de ejemplo.
 
