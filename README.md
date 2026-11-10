@@ -2,13 +2,15 @@
 
 Punto de venta para Android con facturación electrónica SUNAT, pensado para una sola empresa por instalación. Emite boletas, facturas, notas de crédito y débito, notas de venta y guías de remisión, y lleva productos, clientes, stock, caja y reportes.
 
-<p>
-  <img src="docs/capturas/productos.png" width="240" alt="Lista de productos">
-  <img src="docs/capturas/vista-previa.png" width="240" alt="Vista previa del comprobante">
-  <img src="docs/capturas/reportes.png" width="240" alt="Reportes de ventas">
-</p>
+El proyecto se ha probado en el modo beta de SUNAT; todavía no ha emitido en producción con un certificado real.
 
-Todo lo que ves arriba corre en modo beta de SUNAT, con datos de ejemplo. El proyecto se ha probado en beta; todavía no ha emitido en producción con un certificado real.
+## Capturas
+
+| Productos | Vista previa | Reportes |
+|:---:|:---:|:---:|
+| <img src="assets/capturas/productos.png" width="240" alt="Lista de productos"> | <img src="assets/capturas/vista-previa.png" width="240" alt="Vista previa del comprobante"> | <img src="assets/capturas/reportes.png" width="240" alt="Reportes de ventas"> |
+
+Son datos de ejemplo.
 
 ## Cómo está armado
 
@@ -76,7 +78,7 @@ También puedes correrla por consola:
 npx newman run docs/postman/facturador.postman_collection.json --global-var anon_key=TU_ANON_KEY
 ```
 
-Las rutas principales son estas. La lista completa, con sus cuerpos, está en [docs/CONTRATO.md](docs/CONTRATO.md).
+Las rutas principales son estas:
 
 | Método | Ruta | Para qué |
 |---|---|---|
