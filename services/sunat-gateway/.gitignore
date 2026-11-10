@@ -1,0 +1,8 @@
+/vendor/
+.env
+/certificados/*
+!/certificados/.gitkeep
+*.pem
+*.p12
+*.pfx
+*.key
